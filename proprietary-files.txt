@@ -1,0 +1,39 @@
+# Vendor tree para Samsung Galaxy A35 5G (a35x / SM-A356E)
+# Formato: ruta-relativa-en-el-equipo;NOMBRE-MODULO-OPCIONAL
+# Un "-" al inicio evita que setup-makefiles.sh genere una regla automatica
+# (util cuando el archivo necesita reglas manuales, ej: firmas/permisos especiales)
+#
+# Este archivo se llena corriendo extract-files.sh contra el equipo real
+# (por ADB) o contra un dump de firmware. Lo de abajo son las categorias
+# que YA sabemos que existen en este equipo por el trabajo de recovery
+# (nombres reales confirmados via modules.load.recovery y el ramdisk) --
+# falta el path completo real de cada uno, que solo sale corriendo el
+# script contra el equipo.
+
+# --- TEE / Keymint / Gatekeeper (Trustonic) ---
+# Confirmados existentes en /vendor/bin y /vendor/lib64 durante el trabajo
+# de recovery. Necesarios para que Keymint/Gatekeeper funcionen fuera de
+# recovery tambien.
+vendor/bin/tzdaemon
+vendor/bin/tzts_daemon
+vendor/bin/keymint-service
+vendor/bin/gatekeeper
+vendor/bin/extract_ta.sh
+
+# --- Paneles (confirmado por nombre de modulo, ver device tree) ---
+# mcd-panel-ana6710_a35x.ko y mcd-panel-s6e3fc5_a35x.ko ya estan en
+# recovery/root/lib/modules del device tree -- si el vendor tree de una
+# ROM completa necesita firmware/calibracion asociada, va aqui.
+
+# --- Camara (sensores confirmados por modulo) ---
+# is-cis-gc05a3, is-cis-gc08a3, is-cis-gn8, is-cis-hi1339, is-cis-imx882
+# Firmware/calibracion de camara especifico de estos sensores, si aplica.
+
+# --- Vibrador / haptics ---
+# isa1000_vibrator, sec_vibrator -- firmware de haptics si el chip lo requiere.
+
+# --- Carga ---
+# nu2111a_charger -- posible libreria/HAL de carga rapida especifica Samsung.
+
+# TODO: completar corriendo extract-files.sh contra el equipo real (ADB)
+# o contra el firmware oficial completo (AP+CSC+BL+CP) del modelo MXO.
