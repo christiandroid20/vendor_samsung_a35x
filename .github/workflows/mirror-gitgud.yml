@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   mirror:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Clonar dump de gitgud
         run: |
