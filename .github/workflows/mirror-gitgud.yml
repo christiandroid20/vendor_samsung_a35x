@@ -1,0 +1,45 @@
+name: Mirror gitgud a rama de prueba
+
+# Workflow de un solo uso: clona el dump de firmware de terceros
+# (gitgud.io/Van-Firmware-Dumps/samsung/a35x) usando el runner propio
+# (que ya tiene salida a gitgud.io, confirmado por el ROM builder) y lo
+# sube tal cual a la rama gitgud-firm-test de este repo, para comparar
+# contra el vendor tree real armado con extract-files.sh en main.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: self-hosted
+    steps:
+      - name: Clonar dump de gitgud
+        run: |
+          rm -rf /tmp/gitgud_dump
+          git clone --depth=1 https://gitgud.io/Van-Firmware-Dumps/samsung/a35x.git /tmp/gitgud_dump
+
+      - name: Preparar rama gitgud-firm-test (huérfana, sin historial de main)
+        run: |
+          rm -rf /tmp/vendor_repo
+          git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" /tmp/vendor_repo
+          cd /tmp/vendor_repo
+          git checkout --orphan gitgud-firm-test
+          git rm -rf . >/dev/null 2>&1 || true
+          find . -mindepth 1 -maxdepth 1 -not -name ".git" -exec rm -rf {} +
+
+      - name: Copiar el contenido del dump a la rama (sin su .git interno)
+        run: |
+          cd /tmp/gitgud_dump
+          tar -cf - --exclude='.git' . | (cd /tmp/vendor_repo && tar -xf -)
+
+      - name: Commit y push a gitgud-firm-test
+        run: |
+          cd /tmp/vendor_repo
+          git config user.email "actions@github.com"
+          git config user.name "gitgud-mirror-bot"
+          git add -A
+          git commit -m "Mirror de gitgud.io/Van-Firmware-Dumps/samsung/a35x (rama de prueba, sin procesar)"
+          git push origin gitgud-firm-test --force
