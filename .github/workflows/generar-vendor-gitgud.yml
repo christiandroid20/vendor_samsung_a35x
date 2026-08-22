@@ -26,21 +26,27 @@ jobs:
           rm -rf /tmp/vendor_repo
           git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" /tmp/vendor_repo
 
-      - name: Correr extract-files.sh contra el dump
+      - name: Correr extract-vendor-full.sh contra el dump
         run: |
           cd /tmp/vendor_repo
-          chmod +x extract-files.sh setup-makefiles.sh
-          ./extract-files.sh /tmp/gitgud_dump
+          chmod +x extract-vendor-full.sh setup-makefiles.sh
+          ./extract-vendor-full.sh /tmp/gitgud_dump
 
       - name: Commit y push a main
         run: |
           cd /tmp/vendor_repo
           git config user.email "actions@github.com"
           git config user.name "gitgud-vendor-bot"
+          # Mitigar el mismo error de push grande que ya vimos antes
+          # (HTTP 500 / "unexpected disconnect while reading sideband
+          # packet") -- vendor/ completo puede pesar bastante.
+          git config http.postBuffer 524288000
+          git config http.lowSpeedLimit 0
+          git config http.lowSpeedTime 999999
           git add -A
           if git diff --cached --quiet; then
-            echo "Sin cambios -- extract-files.sh no encontró nada nuevo."
+            echo "Sin cambios -- extract-vendor-full.sh no encontró nada nuevo."
             exit 0
           fi
-          git commit -m "Generar vendor tree real desde el dump de gitgud (via extract-files.sh)"
+          git commit -m "Generar vendor tree completo desde el dump de gitgud (via extract-vendor-full.sh)"
           git push origin main
