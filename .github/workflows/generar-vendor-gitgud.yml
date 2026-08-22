@@ -1,0 +1,46 @@
+name: Generar vendor real desde dump de gitgud
+
+# Clona el dump de gitgud (runner con internet completo) y corre
+# nuestro propio extract-files.sh contra el, en modo firmware (no ADB) --
+# genera proprietary/ + Android.mk + a35x-vendor.mk de verdad, y lo
+# sube a main. Usa proprietary-files.txt tal como está en el repo en
+# este momento.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generar-vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar dump de gitgud
+        run: |
+          rm -rf /tmp/gitgud_dump
+          git clone --depth=1 https://gitgud.io/Van-Firmware-Dumps/samsung/a35x.git /tmp/gitgud_dump
+
+      - name: Clonar vendor_samsung_a35x
+        run: |
+          rm -rf /tmp/vendor_repo
+          git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" /tmp/vendor_repo
+
+      - name: Correr extract-files.sh contra el dump
+        run: |
+          cd /tmp/vendor_repo
+          chmod +x extract-files.sh setup-makefiles.sh
+          ./extract-files.sh /tmp/gitgud_dump
+
+      - name: Commit y push a main
+        run: |
+          cd /tmp/vendor_repo
+          git config user.email "actions@github.com"
+          git config user.name "gitgud-vendor-bot"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sin cambios -- extract-files.sh no encontró nada nuevo."
+            exit 0
+          fi
+          git commit -m "Generar vendor tree real desde el dump de gitgud (via extract-files.sh)"
+          git push origin main

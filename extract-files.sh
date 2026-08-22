@@ -24,7 +24,12 @@ VENDOR=samsung
 MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ANDROID_ROOT="${MY_DIR}/../../.."
 BASE_DIR="vendor/${VENDOR}/${DEVICE}/proprietary"
-OUTDIR="${ANDROID_ROOT}/${BASE_DIR}"
+# OUTDIR siempre relativo al propio script (MY_DIR), no a una ruta
+# derivada de 3 niveles hacia arriba -- eso solo tiene sentido si este
+# repo ya esta anidado dentro de un arbol AOSP real en vendor/samsung/a35x,
+# y falla (escribe fuera del repo) cuando se corre standalone, como en
+# el workflow que genera esto desde un dump de firmware.
+OUTDIR="${MY_DIR}/proprietary"
 
 if [ -z "$1" ]; then
     SRC=adb
